@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>YOUTH WORLD AI — Demo</title>
+  <style>
+    :root{
+      --orange:#ff7a18;
+      --navy:#02122b;
+      --black:#000000;
+      --glass: rgba(255,255,255,0.03);
+      --accent: var(--orange);
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    html,body{height:100%;margin:0}
+    body{
+      background: linear-gradient(135deg,var(--navy) 0%, var(--black) 50%, #2b0f00 100%);
+      color: #fff; display:flex; align-items:center; justify-content:center; padding:24px;
+    }
+    .card{
+      width:100%; max-width:980px; border-radius:14px; padding:18px; box-shadow:0 10px 40px rgba(0,0,0,0.6); background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.35));
+      border:1px solid rgba(255,255,255,0.04);
+    }
+    header{display:flex; align-items:center; gap:12px}
+    .logo{width:68px; height:68px; border-radius:12px; background:linear-gradient(135deg,var(--orange),#ff4500); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; color:#111}
+    h1{margin:0; font-size:22px}
+    .sub{color:rgba(255,255,255,0.7); font-size:13px}
+
+    /* Login */
+    #loginScreen{display:flex; gap:14px; align-items:center; justify-content:center; padding:30px;}
+    #loginBox{width:100%; max-width:420px; background:rgba(0,0,0,0.5); padding:20px; border-radius:10px; text-align:center}
+    input[type=text], input[type=password]{width:100%; padding:12px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.02); color:white}
+    button.primary{background:var(--accent); color:#111; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer}
+    .muted{color:rgba(255,255,255,0.6); font-size:13px}
+
+    /* Main UI */
+    #mainUI{display:none}
+    .topbar{display:flex; gap:12px; align-items:center; margin-top:12px}
+    #searchBar{flex:1; display:flex; gap:8px}
+    .search-input{flex:1; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.02); color:white}
+    .pill{padding:8px 12px; border-radius:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.04); cursor:pointer}
+
+    #options{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap}
+    .option-btn{background:linear-gradient(180deg,var(--navy),var(--black)); border:1px solid rgba(255,255,255,0.04); padding:10px 12px; border-radius:10px; cursor:pointer}
+
+    /* chat */
+    #chatBox{margin-top:14px; height:320px; overflow:auto; background:rgba(0,0,0,0.4); border-radius:10px; padding:12px; border:1px solid rgba(255,255,255,0.03)}
+    .msg{margin:10px 0}
+    .msg.you{text-align:right}
+    .msg .bubble{display:inline-block; padding:10px 12px; border-radius:10px; max-width:78%; font-size:14px}
+    .msg.you .bubble{background:linear-gradient(90deg,var(--accent),#ff9533); color:#111}
+    .msg.ai .bubble{background:rgba(255,255,255,0.03); color:#fff}
+
+    .small{font-size:12px; color:rgba(255,255,255,0.6)}
+
+    /* media preview */
+    #mediaPreview img, #mediaPreview video{max-width:160px; max-height:120px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)}
+
+    footer{display:flex; justify-content:space-between; align-items:center; margin-top:12px}
+    .settings{font-size:13px}
+
+    @media(max-width:720px){ .card{padding:12px} #chatBox{height:240px} }
+  </style>
+</head>
+<body>
+  <div class="card" role="main">
+    <header>
+      <div class="logo">YAI</div>
+      <div>
+        <h1>YOUTH WORLD AI</h1>
+        <div class="sub">Private demo • Theme: Orange / Black / Navy Blue</div>
+      </div>
+    </header>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen">
+      <div id="loginBox">
+        <h3>Secure Access — Enter 6-digit code</h3>
+        <input id="codeInput" type="password" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit code" />
+        <div style="height:10px"></div>
+        <button class="primary" id="enterBtn">Enter</button>
+        <p class="muted">Code must be <strong>727374</strong> to enter. If incorrect, the page will ask you to exit.</p>
+        <p id="loginMsg" class="small"></p>
+      </div>
+    </div>
+
+    <!-- MAIN UI -->
+    <div id="mainUI" aria-hidden="true">
+      <div class="topbar">
+        <div style="flex:1">
+          <div id="searchBar">
+            <input id="queryInput" class="search-input" placeholder="Ask YOUTH WORLD AI anything... (private)" />
+            <button class="pill" id="searchBtn">Search</button>
+          </div>
+          <div id="options">
+            <label class="option-btn" title="Attach images, audio or files">
+              Attach Media
+              <input id="mediaInput" type="file" style="display:none" />
+            </label>
+            <button class="option-btn" id="nanoBtn">Nano Banana (image gen)</button>
+            <button class="option-btn" id="voiceBtn">Voice Assistant</button>
+            <button class="option-btn" id="talkBtn">Talk (multi-language)</button>
+            <button class="option-btn" id="clearBtn">Clear Chat</button>
+          </div>
+        </div>
+        <div style="margin-left:12px;text-align:right;min-width:150px">
+          <div class="small">Status: <span id="status">Idle</span></div>
+          <div class="small">Privacy: <strong>Local-only demo</strong></div>
+        </div>
+      </div>
+
+      <div id="chatBox" aria-live="polite"></div>
+
+      <div style="display:flex; gap:8px; margin-top:12px; align-items:center">
+        <div id="mediaPreview"></div>
+        <div style="flex:1"></div>
+      </div>
+
+      <footer>
+        <div class="settings">Demo version — to enable real AI, follow instructions in code comments to add your API keys (calls leave your machine/network).</div>
+        <div class="small">Web Speech & Canvas used for local voice & image demo</div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // ====== Boot / Login ======
+    const enterBtn = document.getElementById('enterBtn');
+    const codeInput = document.getElementById('codeInput');
+    const loginMsg = document.getElementById('loginMsg');
+    const loginScreen = document.getElementById('loginScreen');
+    const mainUI = document.getElementById('mainUI');
+
+    enterBtn.addEventListener('click', ()=> checkCode());
+    codeInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') checkCode(); });
+
+    function checkCode(){
+      const val = codeInput.value.trim();
+      if(val === '727374'){
+        loginScreen.style.display = 'none';
+        mainUI.style.display = 'block';
+        mainUI.setAttribute('aria-hidden','false');
+        appendAIMessage('Welcome to YOUTH WORLD AI. Your session is local demo-only.');
+      } else {
+        loginMsg.textContent = 'Incorrect code. Please Exit.';
+        // small visual shake
+        loginBoxAnimate();
+      }
+    }
+    function loginBoxAnimate(){
+      const box = document.getElementById('loginBox');
+      box.animate([{transform:'translateX(0)'},{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(0)'}], {duration:380});
+    }
+
+    // ====== Chat helpers ======
+    const chatBox = document.getElementById('chatBox');
+    function appendYouMessage(text){
+      const d = document.createElement('div'); d.className='msg you';
+      d.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+      chatBox.appendChild(d); chatBox.scrollTop = chatBox.scrollHeight;
+    }
+    function appendAIMessage(text){
+      const d = document.createElement('div'); d.className='msg ai';
+      d.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+      chatBox.appendChild(d); chatBox.scrollTop = chatBox.scrollHeight;
+    }
+    function escapeHtml(s){ return (s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // ====== Local pseudo-AI engine ======
+    // This demo includes a local "thinking" function that emulates human-like replies.
+    // For real AI, uncomment and use a server-side or direct API call (instructions inside code comments).
+
+    function pseudoThink(prompt){
+      // simple heuristic-based reply with some style
+      const lower = prompt.toLowerCase();
+      if(!prompt || prompt.trim().length===0) return "Say something — I'm listening.";
+      if(lower.includes('time')) return `It's ${new Date().toLocaleString()}.`;
+      if(lower.includes('hello')|| lower.includes('hi')) return "Hello! How can I help you today?";
+      if(lower.includes('who are you')) return "I am YOUTH WORLD AI — a private demo assistant that runs in your browser.";
+      if(lower.includes('image')|| lower.includes('draw')|| lower.includes('picture')) return "Use Nano Banana to generate an image — click Nano Banana and type a short style prompt.";
+      if(lower.includes('voice')) return "Use the Voice Assistant button to speak and listen. Works best in Chrome/Edge.";
+      // fallback: create a thoughtful-sounding reply
+      const endings = ["That makes sense.", "I see — tell me more.", "Interesting. Why do you think that?", "Good question. Here's my take:"];
+      const randEnd = endings[Math.floor(Math.random()*endings.length)];
+      const summary = simpleSummary(prompt);
+      return `${summary} ${randEnd}`;
+    }
+
+    function simpleSummary(text){
+      // take first 12-18 words as "summary" to make it look like reasoning
+      const words = text.trim().split(/\s+/).slice(0,18);
+      return "I understand you said: '" + words.join(' ') + (words.length>=18?"...'":"'" );
+    }
+
+    // ====== Search flow (local) ======
+    const searchBtn = document.getElementById('searchBtn');
+    const queryInput = document.getElementById('queryInput');
+    const status = document.getElementById('status');
+    searchBtn.addEventListener('click', doSearch);
+    queryInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') doSearch(); });
+
+    async function doSearch(){
+      const q = queryInput.value.trim();
+      if(!q) return;
+      appendYouMessage(q);
+      status.textContent = 'Thinking...';
+
+      // simulate "human-like thinking" delay
+      await sleep(600 + Math.random()*900);
+
+      // Local pseudo-AI reply
+      const reply = pseudoThink(q);
+      appendAIMessage(reply);
+      status.textContent = 'Idle';
+    }
+
+    function sleep(ms){ return new Promise(res=>setTimeout(res, ms)); }
+
+    // ====== Attach media ======
+    const mediaInput = document.getElementById('mediaInput');
+    const mediaPreview = document.getElementById('mediaPreview');
+    document.querySelector('label[title="Attach images, audio or files"]').addEventListener('click', ()=> mediaInput.click());
+    mediaInput.addEventListener('change', (evt)=>{
+      const f = evt.target.files && evt.target.files[0];
+      if(!f) return;
+      const url = URL.createObjectURL(f);
+      mediaPreview.innerHTML = '';
+      if(f.type.startsWith('image/')){
+        const img = document.createElement('img'); img.src = url; mediaPreview.appendChild(img);
+        appendAIMessage('Media attached (image). I can reference this in chat when asked.');
+      } else if(f.type.startsWith('video/')){
+        const v = document.createElement('video'); v.src=url; v.controls=true; mediaPreview.appendChild(v);
+        appendAIMessage('Media attached (video).');
+      } else if(f.type.startsWith('audio/')){
+        const a = document.createElement('audio'); a.src=url; a.controls=true; mediaPreview.appendChild(a);
+        appendAIMessage('Media attached (audio).');
+      } else {
+        appendAIMessage('File attached: ' + f.name);
+      }
+    });
+
+    // ====== Nano Banana: local generative art (no external API needed) ======
+    const nanoBtn = document.getElementById('nanoBtn');
+    nanoBtn.addEventListener('click', nanoBanana);
+    async function nanoBanana(){
+      const prompt = promptDialog('Nano Banana — enter a short style prompt (e.g. "sunset abstract, watercolor")');
+      if(prompt === null) return;
+      appendYouMessage('[Nano Banana prompt] ' + prompt);
+      status.textContent = 'Generating image...';
+      // generate a canvas image procedurally
+      const imgDataUrl = await generateArt(prompt);
+      const img = document.createElement('img'); img.src = imgDataUrl;
+      mediaPreview.innerHTML = ''; mediaPreview.appendChild(img);
+      appendAIMessage('Nano Banana generated an abstract image (local).');
+      status.textContent = 'Idle';
+    }
+
+    function promptDialog(msg){ return window.prompt(msg, 'youth world ai'); }
+
+    async function generateArt(prompt){
+      // Create offscreen canvas and render generative art influenced by prompt words
+      const canvas = document.createElement('canvas'); canvas.width=800; canvas.height=600; const ctx = canvas.getContext('2d');
+      // background gradient
+      const g = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+      g.addColorStop(0, '#02122b'); g.addColorStop(1, '#ff7a18'); ctx.fillStyle = g; ctx.fillRect(0,0,canvas.width,canvas.height);
+      // draw layers based on words
+      const words = (prompt||'abstract').toLowerCase().split(/\s+/);
+      for(let i=0;i<40;i++){
+        drawBlob(ctx, canvas.width, canvas.height, words[i%words.length]||'');
+      }
+      // add noise
+      const img = ctx.getImageData(0,0,canvas.width,canvas.height);
+      for(let i=0;i<img.data.length;i+=4){
+        const v = (Math.random()-0.5)*10;
+        img.data[i]+=v; img.data[i+1]+=v; img.data[i+2]+=v;
+      }
+      ctx.putImageData(img,0,0);
+      return canvas.toDataURL('image/png');
+    }
+
+    function drawBlob(ctx, w, h, word){
+      const x = Math.random()*w; const y = Math.random()*h;
+      const r = 20 + Math.random()*220;
+      const colors = [getColorFromWord(word), 'rgba(255,255,255,0.06)', 'rgba(0,0,0,0.08)'];
+      const grd = ctx.createRadialGradient(x,y,r*0.1,x+10,y+10,r);
+      grd.addColorStop(0, colors[Math.floor(Math.random()*colors.length)]);
+      grd.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grd; ctx.beginPath(); ctx.ellipse(x,y,r* (0.8+Math.random()*0.8), r*(0.5+Math.random()*0.8), Math.random()*Math.PI*2, 0, Math.PI*2); ctx.fill();
+    }
+    function getColorFromWord(word){
+      if(!word) return `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.9)`;
+      if(word.includes('sun')||word.includes('gold')||word.includes('orange')) return 'rgba(255,160,60,0.9)';
+      if(word.includes('ocean')||word.includes('sea')||word.includes('blue')) return 'rgba(10,90,180,0.9)';
+      if(word.includes('green')||word.includes('forest')) return 'rgba(20,180,90,0.9)';
+      return `rgba(${(word.charCodeAt(0)||120)%200},${(word.charCodeAt(1)||70)%200},${(word.charCodeAt(2)||200)%200},0.9)`;
+    }
+
+    // ====== Voice Assistant (Web Speech API) ======
+    const voiceBtn = document.getElementById('voiceBtn');
+    let recognition, speaking=false;
+    voiceBtn.addEventListener('click', ()=>{
+      if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+        alert('Speech Recognition not supported in this browser. Use Chrome or Edge.'); return;
+      }
+      startVoiceAssistant();
+    });
+
+    function startVoiceAssistant(){
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'en-IN'; recognition.interimResults = false; recognition.maxAlternatives = 1;
+      recognition.onstart = ()=>{ status.textContent='Listening...'; }
+      recognition.onresult = (evt)=>{ const t = evt.results[0][0].transcript; appendYouMessage('[voice] '+t); handleVoiceQuery(t); }
+      recognition.onerror = (e)=>{ appendAIMessage('Voice error: '+e.error); status.textContent='Idle'; }
+      recognition.onend = ()=>{ if(!speaking) status.textContent='Idle'; }
+      recognition.start();
+    }
+
+    async function handleVoiceQuery(text){
+      const reply = pseudoThink(text);
+      await speakText(reply);
+      appendAIMessage(reply);
+    }
+
+    function speakText(text){ return new Promise((resolve)=>{
+      if(!('speechSynthesis' in window)){ appendAIMessage(text); return resolve(); }
+      const u = new SpeechSynthesisUtterance(text); u.lang='en-IN'; u.rate=1; u.onend=()=>{ resolve(); }; window.speechSynthesis.speak(u);
+    }); }
+
+    // ====== Talk (multi-language chat) ======
+    const talkBtn = document.getElementById('talkBtn');
+    talkBtn.addEventListener('click', ()=>{
+      const lang = prompt('Enter language code for talk (e.g. en, bn, hi) — this demo uses pseudo-AI. Leave empty for en.','en') || 'en';
+      appendAIMessage('Talk mode started for language: ' + lang + '. Speak using Voice Assistant or type in the search bar.');
+    });
+
+    // ====== Clear chat ======
+    const clearBtn = document.getElementById('clearBtn'); clearBtn.addEventListener('click', ()=>{ chatBox.innerHTML=''; appendAIMessage('Chat cleared.'); });
+
+    // ====== OPTIONAL: Integrate with real AI / Search ======
+    /*
+      To enable real AI responses or web search, modify the function below and supply your API key.
+      IMPORTANT: This demo does NOT send anything anywhere. If you enable an API call, your data will leave
+      your browser/network to the provider you choose (OpenAI, Google, etc.). You must explicitly add keys.
+
+      Example (OpenAI completion - fetch style):
+
+      async function callOpenAI(prompt){
+        const key = 'YOUR_OPENAI_API_KEY'; // <-- put your key here (not recommended for public pages)
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+          method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+          body: JSON.stringify({model:'gpt-4o-mini', messages:[{role:'user',content:prompt}], max_tokens:500})
+        });
+        const data = await resp.json(); return data.choices?.[0]?.message?.content || JSON.stringify(data);
+      }
+
+      You could also create a small server-side relay so the API key is not exposed to the browser.
+    */
+
+    // ====== small accessibility helper: keyboard focus on input after login ======
+    document.addEventListener('keydown',(e)=>{ if(e.key==='/' && document.activeElement!==queryInput){ e.preventDefault(); queryInput.focus(); } });
+
+    // initial welcome message
+    appendAIMessage('Enter code to begin.');
+  </script>
+</body>
+</html>
